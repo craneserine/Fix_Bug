@@ -4,16 +4,12 @@ using UnityEngine;
 
 public class BulletDestroyer : MonoBehaviour
 {
-
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.CompareTag("Bullet"))
+        if (collision.CompareTag("Bullet") || collision.CompareTag("EnemyBullet"))
         {
-            Destroy(collision.gameObject);
-        }
-        if (collision.CompareTag("EnemyBullet"))
-        {
-            Destroy(collision.gameObject);
+            // Return the bullet to the pool instead of destroying it
+            BulletPool.instance.ReturnBullet(collision.gameObject);
         }
     }
 }

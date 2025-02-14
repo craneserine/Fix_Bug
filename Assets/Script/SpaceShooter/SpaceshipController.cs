@@ -9,10 +9,10 @@ public class SpaceshipController : MonoBehaviour
 
     public float Speed;
     public float BulletSpeed;
-    public GameObject bulletPrefab;
-    public Transform BulletSpawnHere;
+    public GameObject playerBulletPrefab; // Reference to the player bullet prefab
+    public Transform BulletSpawnHere; // Position where bullets will spawn
     public GameObject GameClearScreen;
-    public TextMeshProUGUI textValue,hpValue;
+    public TextMeshProUGUI textValue, hpValue;
     public int score;
     public int hitponts;
     bool isGameClear = false;
@@ -20,17 +20,18 @@ public class SpaceshipController : MonoBehaviour
     public GameObject GameOverScreen;
     private bool canMove = true;
     private bool canShoot = true;
-    // Start is called before the first frame update
+
     void Start()
     {
         storeHP = hitponts;
     }
 
-    // Update is called once per frame
     void Update()
     {
         textValue.text = score.ToString();
         hpValue.text = hitponts.ToString();
+
+        // Check for shooting input
         if (Input.GetKeyDown(KeyCode.Space) && canShoot)
         {
             SpawnBullet(); 
@@ -43,13 +44,6 @@ public class SpaceshipController : MonoBehaviour
             GameOverScreen.SetActive(true);
             hitponts = 0;
         }
-        /*OnGameClear();
-        if (isGameClear && hitponts > 0)
-        {
-
-            isGameClear = false;
-
-        }*/
     }
 
     private void FixedUpdate()
@@ -64,11 +58,15 @@ public class SpaceshipController : MonoBehaviour
 
     public void SpawnBullet()
     {
-        //Instantiate to clone a game object
-        GameObject bullet = Instantiate(bulletPrefab, BulletSpawnHere.position, Quaternion.identity);
-        Rigidbody2D bulletRb = bullet.GetComponent<Rigidbody2D>();
-        bulletRb.linearVelocity = new Vector2(0f, BulletSpeed);
-
+        // Call GetPooledBullet with "Player" to get a player bullet
+        GameObject bullet = BulletPool.instance.GetPooledBullet("Player");
+        if (bullet != null)
+        {
+            bullet.transform.position = BulletSpawnHere.position; // Set the bullet's position
+            bullet.SetActive(true); // Activate the bullet
+            Rigidbody2D bulletRb = bullet.GetComponent<Rigidbody2D>();
+            bulletRb.linearVelocity = new Vector2(0f, BulletSpeed); // Set the bullet's velocity
+        }
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -76,7 +74,7 @@ public class SpaceshipController : MonoBehaviour
         if (collision.CompareTag("EnemyBullet"))
         {
             hitponts--;
-            Destroy(collision.gameObject);
+            BulletPool.instance.ReturnBullet(collision.gameObject); // Return enemy bullet to pool
         }
     }
 
@@ -86,7 +84,6 @@ public class SpaceshipController : MonoBehaviour
         {
             Enemies[i].transform.position = Enemies[i].InitialPosition;
             Enemies[i].gameObject.SetActive(false);
-            //Delays the call of a method in Ienumerator
             StartCoroutine(DelayEnemiesActive());
         }
         canMove = true;
@@ -96,6 +93,7 @@ public class SpaceshipController : MonoBehaviour
         isGameClear = false;
         GameOverScreen.SetActive(false);
     }
+
     IEnumerator DelayEnemiesActive()
     {
         yield return new WaitForSeconds(0.25f);
@@ -104,10 +102,12 @@ public class SpaceshipController : MonoBehaviour
             Enemies[i].gameObject.SetActive(true);
         }
     }
+
     public void RestartLevel()
     {
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
+
     public void OnGameClear()
     {
         isGameClear = true;
@@ -125,4 +125,3 @@ public class SpaceshipController : MonoBehaviour
         }
     }
 }
-
